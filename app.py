@@ -176,15 +176,21 @@ st.write("Target:", y.name)
 if st.button("Run evaluation"):
     st.info("Splitting data (80/20) and training models...")
 
-    # Force numeric conversion (IMPORTANT)
-    X_num = X.apply(pd.to_numeric, errors='coerce')
-    y_num = pd.to_numeric(y, errors='coerce')
+   y = y.replace(["Absent", "AB", "A", "-", "--", " ", ""], np.nan)
 
-    # Drop rows where target is missing
-    mask = y_num.notna()
-    X_num = X_num.loc[mask]
-    y_num = y_num.loc[mask]
+# Force numeric conversion
+X_num = X.apply(pd.to_numeric, errors='coerce')
+y_num = pd.to_numeric(y, errors='coerce')
 
+# Drop rows where target is missing
+mask = y_num.notna()
+X_num = X_num.loc[mask]
+y_num = y_num.loc[mask]
+
+# Safety check
+if len(X_num) < 5:
+    st.error("Not enough numeric rows after cleaning. Check your marks data.")
+    st.stop()
     # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X_num, y_num, test_size=0.2, random_state=42
