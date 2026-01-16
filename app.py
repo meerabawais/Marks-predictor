@@ -176,31 +176,44 @@ st.write("Target:", y.name)
 if st.button("Run evaluation"):
     st.info("Splitting data (80/20) and training models...")
 
-   y = y.replace(["Absent", "AB", "A", "-", "--", " ", ""], np.nan)
+    # Clean common non-numeric target values
+    y_clean = y.replace(
+        ["Absent", "AB", "A", "-", "--", " ", ""],
+        np.nan
+    )
 
-# Force numeric conversion
-X_num = X.apply(pd.to_numeric, errors='coerce')
-y_num = pd.to_numeric(y, errors='coerce')
+    # Force numeric conversion
+    X_num = X.apply(pd.to_numeric, errors='coerce')
+    y_num = pd.to_numeric(y_clean, errors='coerce')
 
-# Drop rows where target is missing
-mask = y_num.notna()
-X_num = X_num.loc[mask]
-y_num = y_num.loc[mask]
+    # Drop rows where target is missing
+    mask = y_num.notna()
+    X_num = X_num.loc[mask]
+    y_num = y_num.loc[mask]
 
-# Safety check
-if len(X_num) < 5:
-    st.error("Not enough numeric rows after cleaning. Check your marks data.")
-    st.stop()
+    # Safety check
+    if len(X_num) < 5:
+        st.error("Not enough numeric rows after cleaning. Please check your marks data.")
+        st.stop()
+
     # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X_num, y_num, test_size=0.2, random_state=42
     )
 
-
     # Train models
-    dummy = make_pipe(DummyRegressor(strategy='mean')); dummy.fit(X_train, y_train); y_pred_dummy = dummy.predict(X_test)
-    lin = make_pipe(LinearRegression()); lin.fit(X_train, y_train); y_pred_lin = lin.predict(X_test)
-    rf = make_pipe(RandomForestRegressor(n_estimators=200, random_state=42)); rf.fit(X_train, y_train); y_pred_rf = rf.predict(X_test)
+    dummy = make_pipe(DummyRegressor(strategy='mean'))
+    dummy.fit(X_train, y_train)
+    y_pred_dummy = dummy.predict(X_test)
+
+    lin = make_pipe(LinearRegression())
+    lin.fit(X_train, y_train)
+    y_pred_lin = lin.predict(X_test)
+
+    rf = make_pipe(RandomForestRegressor(n_estimators=200, random_state=42))
+    rf.fit(X_train, y_train)
+    y_pred_rf = rf.predict(X_test)
+
 
     # Results table
     rows = [
